@@ -1,0 +1,42 @@
+$process = Get-Process | Where {$_.ProcessName -eq 'Jconsole'}
+$Command = "C:\Program Files\Java\jdk1.8.0_241\bin\jstat.exe"
+$Parms = $process.Id
+$test = Invoke-Expression "& `"$Command`" -gc $Parms" -ErrorAction Ignore
+$name = $test[0]
+$utilisation = $test[1]
+while ($Name.Contains("  ")){
+	$Name= $Name -replace "  "," "
+	}
+$TableName = $Name -replace " ",","
+#$data = $name -replace ' {2,}', ","
+$removefirsdata= $TableName.substring(1);
+$fulldata = $removefirsdata.Substring(0,$removefirsdata.Length-1)
+$parameters = $fulldata -split ","
+#$data = $utilisation  -replace ' {2,}', ","
+while ($utilisation.Contains("  ")){
+	$utilisation= $utilisation -replace "  "," "
+	}
+$data = $utilisation -replace " ",","
+$performance = $data -split ","
+
+$results = for ($i =0; $i -lt $parameters.Count; $i++)
+{
+        [PsCustomObject]@{
+        CounterName = $parameters[$i]
+        Value = $performance[$i]
+        }
+}
+$results.CounterName
+$SOU = $results | where-object {$_.CounterName -eq "S0U"} | Select Value
+$S1U = $results | where-object {$_.CounterName -eq "S1U"} | Select Value
+$EU = $results | where-object {$_.CounterName -eq "EU"} | Select Value
+$OU = $results | where-object {$_.CounterName -eq "OU"} | Select Value
+
+$S0C = $results | where-object {$_.CounterName -eq "S0C"} | Select Value
+$S1C = $results | where-object {$_.CounterName -eq "S1C"} | Select Value
+$EC = $results | where-object {$_.CounterName -eq "EC"} | Select Value
+$OC = $results | where-object {$_.CounterName -eq "OC"} | Select Value
+$CurrentUsedHeapUsage = ([int]$SOU.Value + [int]$S1U.Value + [int]$EU.Value + [int]$OU.Value) / 1024
+$CurrentCommitedHeapUsage = ([int]$S0C.Value + [int]$S1C.Value + [int]$EC.Value + [int]$OC.Value ) / 1024
+$CurrentCommitedHeapUsage
+$CurrentUsedHeapUsage
